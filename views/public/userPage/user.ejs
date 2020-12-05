@@ -23,6 +23,7 @@
       <a class="nav-item nav-link " href="/signup">Sign-Up</a>
       <a class="nav-item nav-link " href="/game">Game</a>
       <a class="nav-item nav-link " href="/search">Search For Players</a>
+      <a class="nav-item nav-link " href="/publicchat">Public Chat</a>
       </div>
       
   </div>
@@ -45,10 +46,19 @@
           <a class="btn btn-sm btn-primary" href="/makeroom/" role="button">Make a Room</a>
           <p class="card-text">Join a Game</p>
           <a class="btn btn-primary btn-sm " href="/findrooms/" role="button">Join a Room</a>
-
-    
         </div>
     </div>
+    <br>
+    <div class="card bg-dark text-white text-center">
+      <div class="card-header">
+       Change your account type!
+      </div>
+      <div class="card-body">
+        <h5 class="card-title">Change account type</h5>
+        <p class="card-text">Decide whether you want to have a public or private account!!!</p>
+        <a class="btn btn-sm btn-primary" href="/user/pp" role="button"><%=user.accountType%></a>
+      </div>
+  </div>
 </div>
 <br>
 <div class="col-12">
@@ -62,7 +72,8 @@
         <a class="btn btn-sm btn-primary" href="/search" role="button">Find my Friends</a>
         <p class="card-text">Find out who you are following and who are following you!</p>
         <a class="btn btn-primary btn-sm " href="/user/following" role="button">View My Friends</a>
-
+        <p class="card-text">Find out who has given you a follow request!!!</p>
+        <a class="btn btn-primary btn-sm " href="/user/followRequests" role="button">Follow Requests</a>
   
       </div>
   </div>

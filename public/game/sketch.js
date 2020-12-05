@@ -10,7 +10,8 @@ var circles = makeCircles(125, 125, 40);
  * Todo: figure out a way to transfer this file to the databse in order to make the game
  * interactive.
  */
-var turn = true;
+var turn;
+var currentTurn;
 
 /**
  * This method is responsible for making the circles in the board of
@@ -37,7 +38,29 @@ function makeCircles(x, y, rad) {
  * The setup function
  */
 function setup() {
+    currentTurn = true;
     createCanvas(500, 500);
+    socket = io("http://localhost:5000");
+    socket.on("initG", function(data)
+    {
+        turn = data;
+        console.log(turn);
+        // console.log(data);
+        // console.log(data.turn);
+        // console.log("init");
+        // console.log(turn)
+    });
+    socket.on("gameAction", function(data)
+    {
+        circles = data.board;
+        currentTurn = data.turn;
+        console.log(currentTurn);
+    });
+    // socket.on("changeTurn", function(data)
+    // {
+    //     console.log(data);
+    //     currentTurn = data;
+    // });
 }
 
 /**
@@ -68,10 +91,12 @@ function changeCircleColor() {
     for (let r = 5; r > -1; r--) {
         if (circles[r][column].color == 'white') {
             circles[r][column].color = getColor();
-            changeTurn();
+            // changeTurn();
             break;
         }
     }
+    socket.emit("makeMove", {board: circles, turn: turn});
+    currentTurn = !currentTurn;
 }
 
 /**
@@ -223,12 +248,16 @@ function checkWinDiagonally() {
         }
     }
 }
-
+let socket;
 /**
  * Handling the events related to the situation when the mouse is pressed.
  */
-function mousePressed() {
-    changeCircleColor();
+function mouseReleased() {
+    if (currentTurn == turn)
+    {
+        changeCircleColor();
+    }
+
     checkWinHorizontally();
     checkWinVertically();
     checkWinDiagonally();
@@ -240,13 +269,10 @@ function mousePressed() {
  */
 function draw() {
     background(70);
-
     for (let r = 0; r < 6; r++) {
         for (let c = 0; c < 7; c++) {
             fill(circles[r][c].color);
             circle(circles[r][c].x, circles[r][c].y, circles[r][c].radius);
         }
     }
-
-
 }
