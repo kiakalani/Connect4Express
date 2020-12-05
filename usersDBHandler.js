@@ -375,6 +375,7 @@ function addLoss(user)
 function addWin(user)
 {
     user.wins++;
+    user.totalGamesPlayed++;
     updateUser(user);
 }
 

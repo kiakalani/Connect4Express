@@ -20,7 +20,6 @@ socket.on("chat-message", function(data)
     addMessage(data.message, data.name, data.id);
 });
 
-
 messageForm.addEventListener("submit", function(e)
 {
     e.preventDefault();

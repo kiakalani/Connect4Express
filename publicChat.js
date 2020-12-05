@@ -45,6 +45,13 @@ function handleTheSocketEvents()
         {
             socket.broadcast.emit("chat-message", {message: message, name: connectedUsers[currentID].username, id: connectedUsers[currentID].id});
         });
+        socket.on("disconnect", function()
+        {
+            console.log(connectedUsers[currentID] + "has been disconnected");
+            delete connectedUsers[currentID];
+            connectedUsers.splice(currentID,1);
+            console.log(connectedUsers.length);
+        });
         
     });
 

@@ -17,7 +17,7 @@ const registrationDisplay = require("./registration");
 const mainComponents = require("./mainComponents");
 const publicChat = require("./publicChat");
 const gameSocket = require("./gameRoomHandler");
-gameSocket.init(server);
+gameSocket.init(server, userManager);
 /*-------------------------------------Setting the get calls---------------------------*/
 userManager.setAllUsersGet(server);
 registration.setRegistrationGets(server, userManager);

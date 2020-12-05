@@ -44,11 +44,7 @@ function setup() {
     socket.on("initG", function(data)
     {
         turn = data;
-        console.log(turn);
-        // console.log(data);
-        // console.log(data.turn);
-        // console.log("init");
-        // console.log(turn)
+        console.log("Your turn is" + turn);
     });
     socket.on("gameAction", function(data)
     {
@@ -56,11 +52,20 @@ function setup() {
         currentTurn = data.turn;
         console.log(currentTurn);
     });
-    // socket.on("changeTurn", function(data)
-    // {
-    //     console.log(data);
-    //     currentTurn = data;
-    // });
+    socket.on("gg", function(data)
+    {
+        console.log("Something");
+        if (data == turn)
+        {
+            window.alert("You won!");
+        } 
+        else if (turn != true && turn != false)
+        {
+            window.alert("G freaking G");
+        }else window.alert("You lost:(");
+
+        location.replace("/");
+    });
 }
 
 /**
@@ -168,9 +173,10 @@ function checkWinHorizontally() {
                 }
             }
             if (checked) {
-                window.alert("Game over");
-                clearBoard();
-                resetTurn();
+                window.alert("You win");
+                location.replace("/");
+                // clearBoard();
+                // resetTurn();
                 return;
             }
         }
@@ -193,9 +199,10 @@ function checkWinVertically() {
 
             }
             if (checked) {
-                window.alert("Game over");
-                clearBoard();
-                resetTurn();
+                window.alert("You win");
+                // clearBoard();
+                // resetTurn();
+                location.replace("/");
                 return;
             }
         }
@@ -240,9 +247,10 @@ function checkWinDiagonally() {
                 }
             }
             if (ffc == 4 || fbc == 4 || bbc == 4 || bfc == 4) {
-                window.alert("Game over");
-                clearBoard();
-                resetTurn();
+                window.alert("You win");
+                // clearBoard();
+                // resetTurn();
+                location.replace("/");
                 return;
             }
         }
