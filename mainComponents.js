@@ -8,7 +8,7 @@ const { urlencoded } = require("express");
  */
 function setGetCalls(server, userManager)
 {
-    setMainMenu(server);
+    setMainMenu(server, userManager);
     setInstructions(server);
     setSearchPage(server, userManager);
 }
@@ -17,13 +17,15 @@ function setGetCalls(server, userManager)
  * This method is responsible for setting the components of the main menu.
  * @param {the server} server 
  */
-function setMainMenu(server)
+function setMainMenu(server, userManager)
 {
     server.get("/", function(request, response)
     {
         if (request.session.user != null)
         {
-            request.session.user.room = [];
+            request.session.user = userManager.userByID(request.session.user.id);
+            userManager.setAllUsersGet(server);
+            // request.session.user.room = [];
         }
         response.render("public/index.ejs");
         // console.log(server.session.user);

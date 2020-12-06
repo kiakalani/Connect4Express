@@ -1,8 +1,6 @@
 let socketIO;
 let app;
-// send a mesage to the client and initialize the room they belong to.
-// Then send a response back to the server and be like this is the id of the user and the room they belong to
-// EZ!
+
 let currentID = 1000;
 const rooms = [];
 function init(server, userManager)
@@ -16,7 +14,6 @@ function init(server, userManager)
     {
         console.log("Game socket is being hosted at port 5000");
     });
-    // handleSocket(userManager);
 }
 
 /**
@@ -95,31 +92,29 @@ function handleSocket(userManager, user)
                     {
                         addWinnerScore(userManager, gameRoom.room[currentPlayerID][1], gameRoom.room);
                         socket.broadcast.emit("gg", gameRoom.room[currentPlayerID][1], gameRoom.id);
-                        //Todo: You should actually remove the room itself;
                         gameRoom.room = [];
                         gameRoom.turn = true;
                     }
                 }
-            });
-            socket.on("disconnect", function()
-            {
-                let happened = false;
-                if ((!gameOver() && hasBothPlayers() && gameRoom.room[currentPlayerID][1] != "spectate"))
+                socket.on("disconnect", function()
                 {
-                    declareWinnerOnQuit(userManager, currentPlayerID, gameRoom.room);
-                    happened = true;
-                }
-                if (happened)
-                {
-                    socket.broadcast.emit("gg", !gameRoom.room[currentPlayerID][1]);
-                    gameRoom.room = [];
-                }
-                if (gameRoom.room.length == 1)
-                {
-                    gameRoom.room = [];
-                } else gameRoom.room.splice(currentPlayerID, 1);
-                console.log("Disconnected" + gameRoom.room.length);
-    
+                    let happened = false;
+                    if (gameRoom.room[currentPlayerID] != null > 0 &&(!gameOver(gameComponents.board) && hasBothPlayers(gameRoom.room) && gameRoom.room[currentPlayerID][1] != "spectate"))
+                    {
+                        declareWinnerOnQuit(userManager, currentPlayerID, gameRoom.room);
+                        happened = true;
+                    }
+                    if (happened)
+                    {
+                        socket.broadcast.emit("gg", !gameRoom.room[currentPlayerID][1]);
+                        gameRoom.room = [];
+                    }
+                    if (gameRoom.room.length == 1)
+                    {
+                        gameRoom.room = [];
+                    } else gameRoom.room.splice(currentPlayerID, 1);
+                    console.log("Disconnected" + gameRoom.room.length);
+                });
             });
         });
         socket.on("turnItOff", function(){happened = false;})
@@ -137,7 +132,7 @@ function gameOver(board)
     return checkWinHorizontally(board) || checkWinVertically(board) || checkWinDiagonally(board);
 }
 
-function hasBothPlayers()
+function hasBothPlayers(gameRoom)
 {
     let te = false;
     let fe = false;
@@ -275,6 +270,28 @@ function checkWinDiagonally(circles) {
     }
     return false;
 }
+function roomHasPlayerName(room, playername)
+{
+    for (let i = 0; i <room.room.length; ++i)
+    {
+        if (room.room[i][0].username.toLowerCase().includes(playername.toLowerCase()))
+        return true;
+    }
+    return false;
+}
+
+function getRoomByFilters(name, playername)
+{
+    let neededrooms = []
+    for (let i = 0; i <rooms.length; ++i)
+    {
+        if (roomHasPlayerName(rooms[i], playername) && rooms[i].name.toLowerCase().includes(name.toLowerCase()))
+        {
+            neededrooms.push(rooms[i]);
+        }
+    }
+    return neededrooms;
+}
 
 /**
  * This method is responsible for setting the server's get call for finding the roooms.
@@ -285,7 +302,14 @@ function setFindRooms(server)
     server.get("/findrooms", function(request, response)
     {
         removeEmptyRoom();
-        response.render("public/search/searchGames.ejs", {current: rooms});
+        if (request.session.user == null)
+        {
+            response.redirect("/user");
+        } else if (request.url.includes("?"))
+        {
+            response.render("public/search/searchGames.ejs", {current: getRoomByFilters(request.query.detail, request.query.player)});
+        } else response.redirect("/findrooms/?player=&active=on&detail=");
+
     });
 }
 

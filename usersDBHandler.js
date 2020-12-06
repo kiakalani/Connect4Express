@@ -125,7 +125,7 @@ function setUserGet(user, server)
             request.session.user.receivedFriendRequests.includes(user.id))
             {
                 response.render("public/userPage/usersPage.ejs", {user,
-                followTxt: followingText(request.session.user, user)});
+                followTxt: followingText(request.session.user, user), winning: winningRate(user), userByUserName});
             }
             else
             {
@@ -152,6 +152,11 @@ function setFollowPage(user, server)
             response.redirect("/users/"+user.id);
         }
     });
+}
+function winningRate(user)
+{
+    let win = 0.0 + user.wins;
+    return (win / user.totalGamesPlayed) * 100;
 }
 
 /**
@@ -528,4 +533,4 @@ module.exports = {setUserOffline, showFollowRequests, addWin,
 addLoss, usersFriends, setOnlineStatus, setUserType, 
 setAllUsersGet, addUser, loginUser, userByUserName, userByID,
 readUsers, searchForUser, searchFollowingUser,
-searchThroughFollowRequests, addToUsersRecord};
+searchThroughFollowRequests, addToUsersRecord, setAllUsersGet};

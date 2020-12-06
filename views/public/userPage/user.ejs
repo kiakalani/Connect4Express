@@ -85,7 +85,7 @@
     <div class="card-body">
       <h5 class="card-title">View your Past games results!</h5>
       <% user.record.forEach(function(record){%>
-      <p class="card-text"> Against: <%=record[0]%> and <%=record[1]%></p>
+      <p class="card-text"> Against: <a href="/users/<%=uerByUsername(record[0]).id%>"><%=record[0]%></a> and <%=record[1]%></p>
       <%});%>
     </div>
   </div>

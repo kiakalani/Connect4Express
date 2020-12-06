@@ -14,7 +14,7 @@
  */
 function setViews(server, userManager)
 {
-    displayUserPage(server);
+    displayUserPage(server, userManager);
     handleLogOut(server, userManager);
     displayFollowingUsers(server, userManager);
     goOfflineForUser(server, userManager);
@@ -26,7 +26,7 @@ function setViews(server, userManager)
  * This method sets the get call in relates to viewing the personal profile.
  * @param {The server of the project} server 
  */
-function displayUserPage(server)
+function displayUserPage(server, userManager)
 {
     server.get("/user", function(request, response)
     {
@@ -36,7 +36,8 @@ function displayUserPage(server)
         }
         else
         {
-            response.render("public/userPage/user.ejs", {user: request.session.user});
+            userManager.setAllUsersGet(server);
+            response.render("public/userPage/user.ejs", {user: request.session.user, uerByUsername: userManager.userByUserName});
         }
     });
 }

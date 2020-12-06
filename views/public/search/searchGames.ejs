@@ -37,8 +37,12 @@
         </div>
     </div>
     <form class="form-inline d-flex justify-content-center md-form form-sm active-pink-2 mt-2">
-        <input class="form-control form-control-sm mr-3 w-75" type="text" placeholder="Search" aria-label="Search"
-            id="SearchedTerm" onkeyup="searchForUser()">
+        <input class="form-control form-control-sm mr-3 w-75" type="text" placeholder="Search for player's name" aria-label="Search"
+            id="SearchedTerm" name="player">
+            <label><input class="form-control form-control-sm mr-3 w-75" type="checkbox" name="active" placeholder="Active Game"><span class="badge badge-primary">Active games</span></label>
+            <input class="form-control form-control-sm mr-3 w-75" type="text" placeholder="Search for the room's name" aria-label="Search" name="detail">
+            <button type="submit" class="btn btn-dark" href="#">Search</button>
+
         <i class="fas fa-search" aria-hidden="true"></i>
     </form>
 

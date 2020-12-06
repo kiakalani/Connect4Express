@@ -37,16 +37,15 @@
 <div class="col-12">
     <div class="card bg-dark text-white text-center">
         <div class="card-header">
-         Current Games
+         Past Games
         </div>
         <div class="card-body">
           <h5 class="card-title">Games</h5>
-          <p class="card-text">Recent game 1</p>
-          <a class="btn btn-sm btn-primary" href="#" role="button">Spectate</a>
-          <p class="card-text">Recent Game 2</p>
-          <a class="btn btn-primary btn-sm " href="#" role="button">Spectate</a>
+          <% user.record.forEach(function(record){%>
+          <p class="card-text">Against <a href="/users/<%=userByUserName(record[0]).id%>"><%=record[0]%></a> and <%=record[1]%></p>
+          <%});%>
+          <!-- <a class="btn btn-sm btn-primary" href="#" role="button">Spectate</a> -->
 
-    
         </div>
     </div>
 </div>
@@ -59,7 +58,10 @@
          Stats
         </div>
         <div class="card-body">
-            <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
+          <p class="card-text">Total Games Played = <%=user.totalGamesPlayed%></p>
+          <p class="card-text">Total Games won = <%=user.wins%></p>
+          <p class="card-text">Total Games lost = <%=user.losses%></p>
+          <p class="card-text">Winning rate = <%=winning%></p>
         </div>
     </div>
 </div>
