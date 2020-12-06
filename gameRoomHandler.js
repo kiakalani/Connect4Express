@@ -99,7 +99,7 @@ function handleSocket(userManager, user)
                     socket.broadcast.emit("gameAction", {turn: gameRoom.turn, board: gameComponents.board, roomID: gameRoom.id});
                     if (gameOver(gameComponents.board) &&gameRoom.room.length != 0)
                     {
-                        addWinnerScore(userManager, gameRoom.room[currentPlayerID][1], gameRoom.room);
+                        addWinnerScore(userManager, !gameRoom.turn, gameRoom.room);
                         socket.broadcast.emit("gg", gameRoom.room[currentPlayerID][1], gameRoom.id);
                         gameRoom.room = [];
                         gameRoom.turn = true;
@@ -122,7 +122,6 @@ function handleSocket(userManager, user)
                     {
                         gameRoom.room = [];
                     } else gameRoom.room.splice(currentPlayerID, 1);
-                    socket.close();
                 });
             });
         });
@@ -184,7 +183,7 @@ function addWinnerScore(userManager, winner, gameRoom)
             gameRoom[i][0].room = [];
         }
     }
-    userManager.addToUsersRecord(user2, user1);
+    userManager.addToUsersRecord(user1, user2);
 }
 
 /**
