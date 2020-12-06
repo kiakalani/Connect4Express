@@ -77,18 +77,21 @@
   
       </div>
   </div>
+  <br>
+  <div class="card bg-dark text-white text-center">
+    <div class="card-header">
+     Past Games
+    </div>
+    <div class="card-body">
+      <h5 class="card-title">View your Past games results!</h5>
+      <% user.record.forEach(function(record){%>
+      <p class="card-text"> Against: <%=record[0]%> and <%=record[1]%></p>
+      <%});%>
+    </div>
+  </div>
 </div>
 <br>
-<div class="col-12">
-    <div class="card  bg-dark text-white text-center">
-        <div class="card-header ">
-         Stats
-        </div>
-        <div class="card-body">
-            <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
-        </div>
-    </div>
-</div>
+
 
 
 

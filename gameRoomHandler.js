@@ -3,6 +3,7 @@ let app;
 // send a mesage to the client and initialize the room they belong to.
 // Then send a response back to the server and be like this is the id of the user and the room they belong to
 // EZ!
+let currentID = 1000;
 const rooms = [];
 function init(server, userManager)
 {
@@ -58,60 +59,6 @@ function addPlayerToRoom(room, user)
     }
     else room.push([user, "spectate"]);
 }
-// function socketHdlr(socket)
-// {
-//     let happened = false;
-//     let gameRoom;
-//     initializeRoomOnSocketForUser(user, socket);
-//     socket.on("provideRoomID", function(data)
-//     {
-//         gameRoom = getRoomByID(data);
-//         let currentPlayerID = gameRoom.room.length - 1;
-//         socket.emit("initG", {turn: gameRoom.room[currentPlayerID][1], roomID: gameRoom.id});
-//         if (!happened)
-//         socket.on("makeMove", function(gameComponents)
-//         {
-//             happened = true;
-//             if (gameComponents.roomID == gameRoom.id)
-//             {
-//                 for (let i = 0; i < gameRoom.room.length+1; ++i)
-//                 if (gameRoom.turn)
-//                 {
-//                     gameRoom.turn = false;
-//                 } else gameRoom.turn = true;
-//                 socket.broadcast.emit("gameAction", {turn: gameRoom.turn, board: gameComponents.board, roomID: gameRoom.id});
-//                 if (gameOver(gameComponents.board))
-//                 {
-//                     addWinnerScore(userManager, gameRoom[currentPlayerID][1]);
-//                     socket.broadcast.emit("gg", gameRoom[currentPlayerID][1]);
-//                     gameRoom = [];
-//                     gameRoom.turn = true;
-//                 }
-//             }
-//         });
-//         socket.on("disconnect", function()
-//         {
-//             let happened = false;
-//             if ((!gameOver() && hasBothPlayers() && gameRoom.room[currentPlayerID][1] != "spectate"))
-//             {
-//                 declareWinnerOnQuit(userManager, currentPlayerID, gameRoom.room);
-//                 happened = true;
-//             }
-//             if (happened)
-//             {
-//                 socket.broadcast.emit("gg", !gameRoom.room[currentPlayerID][1]);
-//                 gameRoom.room = [];
-//             }
-//             if (gameRoom.room.length == 1)
-//             {
-//                 gameRoom.room = [];
-//             } else gameRoom.room.splice(currentPlayerID, 1);
-//             console.log("Disconnected" + gameRoom.room.length);
-
-//         });
-//     });
-//     socket.on("turnItOff", function(){happened = false;})
-// }
 
 /**
  * This function handles the events related to the players getting connected
@@ -132,11 +79,12 @@ function handleSocket(userManager, user)
         initializeRoomOnSocketForUser(user, socket);
         socket.off("provideRoomID",function(data){}).on("provideRoomID", function(data)
         {
+            if (data == null) return;
             gameRoom = getRoomByID(data);
             let currentPlayerID = gameRoom.room.length - 1;
             socket.emit("initG", {turn: gameRoom.room[currentPlayerID][1], roomID: gameRoom.id});
             if (!happened)
-            socket.off("makeMove",function(socket){}).on("makeMove", function(gameComponents)
+            socket.on("makeMove", function(gameComponents)
             {
                 happened = true;
                 if (gameComponents.roomID == gameRoom.id)
@@ -211,18 +159,18 @@ function addWinnerScore(userManager, winner, gameRoom)
         {
             user1 = gameRoom[i][0];
             user1.room = [];
-            userManager.addWin(gameRoom[i][0]);
+            userManager.addLoss(gameRoom[i][0]);
             gameRoom[i][0].room = [];
             
         } else if (gameRoom[i][1] != "spectate" && gameRoom[i][1] != winner)
         {
             user2 = gameRoom[i][0];
             user2.room = [];
-            userManager.addLoss(gameRoom[i][0]);
+            userManager.addWin(gameRoom[i][0]);
             gameRoom[i][0].room = [];
         }
     }
-    userManager.addToUsersRecord(user1, user2);
+    userManager.addToUsersRecord(user2, user1);
 }
 function declareWinnerOnQuit(userManager, userID, gameRoom)
 {
@@ -377,7 +325,7 @@ function setRoomCreation(server, userManager)
  */
 function createRoom(user, name, password, server, userManager)
 {
-    let id = rooms.length == 0 ? 1000: rooms[rooms.length-1].id + 1;
+    let id = currentID++;
     rooms.push({id: id, room:[[user, true, id]], name: name, password: password, turn: true});
     user.room.push(rooms[rooms.length-1].id);
     server.get("/rooms/"+id, function(request, response)
