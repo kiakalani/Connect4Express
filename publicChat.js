@@ -1,4 +1,15 @@
 /**
+ * @author Kia Kalani
+ * Student ID: 101145220
+ * This script file contains all of the components related to the public chat portion of
+ * the code. This contains both of the get calls related to the rest api and functionality
+ * of it.
+ * @version 1.00
+ * @since 1.00
+ */
+
+
+/**
  * HTTP server for running the socket
  */
 let app;
@@ -12,6 +23,7 @@ let socketIO;
  * An array of the users who are in the public chat.
  */
 const connectedUsers = [];
+
 /**
  * This method is responsible for initializing the socket and running it on
  * port 4800.
@@ -23,7 +35,6 @@ function init(server)
     socketIO = require("socket.io")(app, {cors:{origin:"*"}});
     app.listen(4800, function()
     {
-        console.log("Socket is listening at port", 4800);
     });
     handleTheSocketEvents();
 }
@@ -36,10 +47,6 @@ function handleTheSocketEvents()
 {
     socketIO.on("connection", function(socket)
     {
-        if (connectedUsers.length > 0)
-        {
-            console.log(connectedUsers[connectedUsers.length-1].username + " has been connected to the public chat!!");
-        }
         let currentID = connectedUsers.length - 1;
         socket.on("sendChat", function(message)
         {
@@ -47,10 +54,8 @@ function handleTheSocketEvents()
         });
         socket.on("disconnect", function()
         {
-            console.log(connectedUsers[currentID] + "has been disconnected");
             delete connectedUsers[currentID];
             connectedUsers.splice(currentID,1);
-            console.log(connectedUsers.length);
         });
         
     });

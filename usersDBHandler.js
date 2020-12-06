@@ -93,7 +93,6 @@ function followingEvent(user1, user2)
     if (user1.sentFriendRequests.includes(user2.id))
     {
         removeFriendRequest(user1, user2);
-        console.log("ici");
     }
     else if (user1.receivedFriendRequests.includes(user2.id))
     {
@@ -153,6 +152,11 @@ function setFollowPage(user, server)
         }
     });
 }
+/**
+ * This function is responsible for providing the win/loss rate of the
+ * player.
+ * @param {the user} user 
+ */
 function winningRate(user)
 {
     let win = 0.0 + user.wins;
@@ -487,7 +491,12 @@ function getFollowRequestUsers(user)
     }
     return users;
 }
-
+/**
+ * This method is responsible for providing the follow requests
+ * according to the searched term.
+ * @param {the user who is making the request} user 
+ * @param {the term they are searching for} term 
+ */
 function searchThroughFollowRequests(user, term)
 {
     let allUsers = getFollowRequestUsers(user);
@@ -521,6 +530,12 @@ function getPublicUsers()
     return publicUsers;
 }
 
+/**
+ * This method is responsible for adding a log of win/loss record to the player's
+ * record.
+ * @param {the first user} user1 
+ * @param {the second user} user2 
+ */
 function addToUsersRecord(user1, user2)
 {
     user1.record.push([user2.username, "Won"]);

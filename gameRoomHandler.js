@@ -1,8 +1,24 @@
+/**
+ * @author Kia Kalani
+ * Student ID: 101145220
+ * This script file contains the game logic related to the rooms, in terms of
+ * the rest api get calls and the logic behind setting up different rooms and
+ * transferring signals.
+ * @version 1.00
+ * @since 1.00
+ */
+
+
 let socketIO;
 let app;
 
 let currentID = 1000;
 const rooms = [];
+/**
+ * This method is responsible for opening up a socket for the players.
+ * @param {the server} server 
+ * @param {the user manager} userManager 
+ */
 function init(server, userManager)
 {
     setGame(server, userManager);
@@ -12,7 +28,6 @@ function init(server, userManager)
     setFindRooms(server);
     app.listen(5000, function()
     {
-        console.log("Game socket is being hosted at port 5000");
     });
 }
 
@@ -23,7 +38,6 @@ function init(server, userManager)
  */
 function setGame(server, userManager)
 {
-    // Todo: Figure out how to make this multiplayer with socket.io
     server.get("/game", function(request, response)
     {
         if (request.session.user == null || request.session.user.room.length == 0)
@@ -40,7 +54,7 @@ function setGame(server, userManager)
 
 
 /**
- * 
+ * This method adds a player to the room
  * @param {the room we are adding the user to} room 
  * @param {the user we are adding to the room} user 
  */
@@ -58,14 +72,9 @@ function addPlayerToRoom(room, user)
 }
 
 /**
- * This function handles the events related to the players getting connected
- * and handling their playing moves. Additionally, it handles the game moves.
- * Todo:
- * 1: Check the winning condition over here and if it happens, restart
- * the board.
- * 2: Make rooms for playing the games.
- * 3: In the main menu let the players spectate the games.
- * 4: Update win loss record of the players. 
+ * This method is responsible for handling the connected connection to the socket.
+ * @param {the user manager object} userManager 
+ * @param {the added user to a room} user 
  */
 function handleSocket(userManager, user)
 {
@@ -113,7 +122,7 @@ function handleSocket(userManager, user)
                     {
                         gameRoom.room = [];
                     } else gameRoom.room.splice(currentPlayerID, 1);
-                    console.log("Disconnected" + gameRoom.room.length);
+                    socket.close();
                 });
             });
         });
@@ -132,6 +141,10 @@ function gameOver(board)
     return checkWinHorizontally(board) || checkWinVertically(board) || checkWinDiagonally(board);
 }
 
+/**
+ * This method indicates whether both the true and false turns are in the room.
+ * @param {the game room} gameRoom 
+ */
 function hasBothPlayers(gameRoom)
 {
     let te = false;
@@ -144,6 +157,12 @@ function hasBothPlayers(gameRoom)
     return te && fe;
 }
 
+/**
+ * This function adds the winner's score to its object in database and components
+ * @param {the user manager object} userManager 
+ * @param {the player who won the game} winner 
+ * @param {the game room itself} gameRoom 
+ */
 function addWinnerScore(userManager, winner, gameRoom)
 {
     let user1;
@@ -167,23 +186,35 @@ function addWinnerScore(userManager, winner, gameRoom)
     }
     userManager.addToUsersRecord(user2, user1);
 }
+
+/**
+ * This function is responsible for declaring the winner when a user gives up
+ * the game.
+ * @param {the user manager object} userManager 
+ * @param {the id of the user} userID 
+ * @param {the current game room of the user} gameRoom 
+ */
 function declareWinnerOnQuit(userManager, userID, gameRoom)
 {
+    let user1,user2;
     if ((gameRoom[userID][1] == true || gameRoom[userID][1] == false))
     {
-        console.log(gameRoom[userID][0]);
         gameRoom[userID][0].room = [];
         userManager.addLoss(gameRoom[userID][0]);
+        user1 = gameRoom[userID][0];
         for (let i = 0; i < gameRoom.length; ++i)
         {
             if (i == userID) continue;
             if (gameRoom[i][1] == true || gameRoom[i][1] == false)
             {
+                user2 = gameRoom[i][0];
                 userManager.addWin(gameRoom[i][0]);
             }
         }
+        userManager.addToUsersRecord(user2, user1);
     }
 }
+
 /**
  * This method checks the win condition for horizontal cases.
  */
@@ -270,6 +301,13 @@ function checkWinDiagonally(circles) {
     }
     return false;
 }
+
+/**
+ * this function would indicate whether the player is in the room or not.
+ * @param {the room} room 
+ * @param {the name of the player} playername 
+ * @returns true if the player is in the room
+ */
 function roomHasPlayerName(room, playername)
 {
     for (let i = 0; i <room.room.length; ++i)
@@ -280,6 +318,11 @@ function roomHasPlayerName(room, playername)
     return false;
 }
 
+/**
+ * This method is responsible for providing the rooms with the room name and player's name inside it.
+ * @param {the name of the room} name 
+ * @param {the name of the player} playername 
+ */
 function getRoomByFilters(name, playername)
 {
     let neededrooms = []
@@ -330,8 +373,6 @@ function setRoomCreation(server, userManager)
         {
             if (request.url.includes("?"))
             {
-                console.log(request.query.username);
-                console.log(request.query.password);
                 createRoom(request.session.user, request.query.username, request.query.password, server);
                 handleSocket(userManager, request.session.user);
                 response.redirect("/game");
@@ -342,7 +383,8 @@ function setRoomCreation(server, userManager)
 }
 
 /**
- * 
+ * This function is responsible for setting the get of the room and authenticating them
+ * and finally redirecting them to the game page.
  * @param {the user who creates the room} user 
  * @param {the name of the room} name 
  * @param {the password of the room} password 
@@ -365,13 +407,20 @@ function createRoom(user, name, password, server, userManager)
             }
         }
         response.render("public/game/joinRoom.ejs");
-        //Open up an authentiaction page; if they were able to authenticate, then move them to the array and redirect to the game page.
     });
 }
+
+/**
+ * this function is responsible for initializing the room socket by sending
+ * each client their room id.
+ * @param {the user} user 
+ * @param {the socket} socket 
+ */
 function initializeRoomOnSocketForUser(user, socket)
 {
     socket.emit("sendRoom", user.room[0]);
 }
+
 /**
  * This method is responsible for adding a user to the room
  * @param {the room} room 
@@ -381,7 +430,6 @@ function addUserToRoom(room, user)
 {
     room.room.push([user, room.room.length == 1 ? false: "spectate", room.id]);
     user.room.push(room.id);
-    // user.currentRoom = room;
 }
 
 /**
@@ -397,7 +445,9 @@ function getRoomByID(id)
     }
     return null;
 }
+
 /**
+ * @deprecated
  * This method takes care of joining a player to the room.
  * It would automatically join the rest of the players as spectators
  * once there are two people in the room.
@@ -411,10 +461,11 @@ function joinRoom(user, password, roomID)
     if (room.password == password)
     {
         room.room.push(user);
-        // user.room = room;
     }
 }
-
+/**
+ * This method removes the rooms that have no active players within them.
+ */
 function removeEmptyRoom()
 {
     for (let i = 0; i <rooms.length; ++i)

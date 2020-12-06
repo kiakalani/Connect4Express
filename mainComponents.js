@@ -1,4 +1,12 @@
-const { urlencoded } = require("express");
+
+/**
+ * @author Kia Kalani
+ * Student ID: 101145220
+ * This script file contains the main components of the project.
+ * This includes main menu, searching for users, and the instructions page. 
+ * @version 1.00
+ * @since 1.00
+ */
 
 /**
  * This method is responsible for main calls that are not specifically related
@@ -25,10 +33,8 @@ function setMainMenu(server, userManager)
         {
             request.session.user = userManager.userByID(request.session.user.id);
             userManager.setAllUsersGet(server);
-            // request.session.user.room = [];
         }
         response.render("public/index.ejs");
-        // console.log(server.session.user);
     });
 }
 

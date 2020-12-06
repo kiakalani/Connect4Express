@@ -97,10 +97,21 @@ function goOfflineForUser(server, userManager)
     });
 }
 
+/**
+ * This method is responsible for setting the get call of the follow
+ * requests for a specific logged in user.
+ * @param {the user} server 
+ * @param {the user manager object} userManager 
+ */
 function getFollowRequests(server, userManager)
 {
     server.get("/user/followRequests", function(request, response)
     {
+        if (request.session.user == null)
+        {
+            response.redirect("/user");
+            return;
+        }
         if (!request.url.includes("?"))
         {
             response.redirect("/user/followRequests/?searchTerm=");
@@ -112,7 +123,11 @@ function getFollowRequests(server, userManager)
         }
     })
 }
-
+/**
+ * This method is responsible for handling the user's request for going private.
+ * @param {the server} server 
+ * @param {the user manager object} userManager 
+ */
 function goPrivatePublicHandler(server, userManager)
 {
     server.get("/user/pp", function(request, response)

@@ -1,3 +1,13 @@
+/**
+ * @author Kia Kalani
+ * Student ID: 101145220
+ * This script file contains the main server components and assembles the whole
+ * project together.
+ * @version 1.00
+ * @since 1.00
+ */
+
+
 const express = require("express");
 const path = require("path");
 const port = process.env.PORT || 3000;

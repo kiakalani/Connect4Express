@@ -1,3 +1,15 @@
+/**
+ * @author Kia Kalani
+ * Student ID: 101145220
+ * This script file contains the components related to the registartion
+ * in terms of both the get calls for the rest api and handling them on
+ * the server side.
+ * @version 1.00
+ * @since 1.00 
+ */
+
+
+
 
 /**
  * This method takes care of functionality of the get methods
