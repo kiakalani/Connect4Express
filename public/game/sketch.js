@@ -2,7 +2,7 @@
  * The board of the game.
  */
 var circles = makeCircles(125, 125, 40);
-
+let roomID;
 /**
  * A boolean indicator for whether it is the red player's turn or yellow player's.
  * Note that the turn would be transferred to the database and system to make the
@@ -41,20 +41,32 @@ function setup() {
     currentTurn = true;
     createCanvas(500, 500);
     socket = io("http://localhost:5000");
+    socket.on("sendRoom", function(data)
+    {
+        console.log("This user belongs to room "+data);
+        
+        roomID = data;
+        socket.emit("provideRoomID", roomID);
+
+    });
     socket.on("initG", function(data)
     {
-        turn = data;
+        if (data.roomID == roomID)
+        turn = !data.turn;
         console.log("Your turn is" + turn);
     });
+
     socket.on("gameAction", function(data)
     {
-        circles = data.board;
-        currentTurn = data.turn;
-        console.log(currentTurn);
+        if (data.roomID == roomID)
+        {
+            circles = data.board;
+            currentTurn = data.turn;
+            console.log("Current turn is "+currentTurn);
+        }
     });
     socket.on("gg", function(data)
     {
-        console.log("Something");
         if (data == turn)
         {
             window.alert("You won!");
@@ -100,7 +112,8 @@ function changeCircleColor() {
             break;
         }
     }
-    socket.emit("makeMove", {board: circles, turn: turn});
+    socket.emit("makeMove", {board: circles, turn: turn, roomID: roomID});
+    // socket.emit("turnItOff", function(){})
     currentTurn = !currentTurn;
 }
 

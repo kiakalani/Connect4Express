@@ -1,19 +1,21 @@
 let socketIO;
 let app;
-
-
-let gameRoom = [];
-let turn = true;
+// send a mesage to the client and initialize the room they belong to.
+// Then send a response back to the server and be like this is the id of the user and the room they belong to
+// EZ!
+const rooms = [];
 function init(server, userManager)
 {
     setGame(server, userManager);
     app = require("http").Server(server);
     socketIO = require("socket.io")(app, {cors:{origin:"*"}});
+    setRoomCreation(server, userManager);
+    setFindRooms(server);
     app.listen(5000, function()
     {
         console.log("Game socket is being hosted at port 5000");
     });
-    handleSocket(userManager);
+    // handleSocket(userManager);
 }
 
 /**
@@ -26,13 +28,13 @@ function setGame(server, userManager)
     // Todo: Figure out how to make this multiplayer with socket.io
     server.get("/game", function(request, response)
     {
-        if (request.session.user == null)
+        if (request.session.user == null || request.session.user.room.length == 0)
         {
             response.redirect("/user");
         }
         else
         {
-            addPlayerToRoom(gameRoom, request.session.user);
+            addPlayerToRoom(getRoomByID(request.session.user.room[0]).room, request.session.user);
             response.render("public/game/game.ejs");
         }
     });
@@ -56,7 +58,60 @@ function addPlayerToRoom(room, user)
     }
     else room.push([user, "spectate"]);
 }
+// function socketHdlr(socket)
+// {
+//     let happened = false;
+//     let gameRoom;
+//     initializeRoomOnSocketForUser(user, socket);
+//     socket.on("provideRoomID", function(data)
+//     {
+//         gameRoom = getRoomByID(data);
+//         let currentPlayerID = gameRoom.room.length - 1;
+//         socket.emit("initG", {turn: gameRoom.room[currentPlayerID][1], roomID: gameRoom.id});
+//         if (!happened)
+//         socket.on("makeMove", function(gameComponents)
+//         {
+//             happened = true;
+//             if (gameComponents.roomID == gameRoom.id)
+//             {
+//                 for (let i = 0; i < gameRoom.room.length+1; ++i)
+//                 if (gameRoom.turn)
+//                 {
+//                     gameRoom.turn = false;
+//                 } else gameRoom.turn = true;
+//                 socket.broadcast.emit("gameAction", {turn: gameRoom.turn, board: gameComponents.board, roomID: gameRoom.id});
+//                 if (gameOver(gameComponents.board))
+//                 {
+//                     addWinnerScore(userManager, gameRoom[currentPlayerID][1]);
+//                     socket.broadcast.emit("gg", gameRoom[currentPlayerID][1]);
+//                     gameRoom = [];
+//                     gameRoom.turn = true;
+//                 }
+//             }
+//         });
+//         socket.on("disconnect", function()
+//         {
+//             let happened = false;
+//             if ((!gameOver() && hasBothPlayers() && gameRoom.room[currentPlayerID][1] != "spectate"))
+//             {
+//                 declareWinnerOnQuit(userManager, currentPlayerID, gameRoom.room);
+//                 happened = true;
+//             }
+//             if (happened)
+//             {
+//                 socket.broadcast.emit("gg", !gameRoom.room[currentPlayerID][1]);
+//                 gameRoom.room = [];
+//             }
+//             if (gameRoom.room.length == 1)
+//             {
+//                 gameRoom.room = [];
+//             } else gameRoom.room.splice(currentPlayerID, 1);
+//             console.log("Disconnected" + gameRoom.room.length);
 
+//         });
+//     });
+//     socket.on("turnItOff", function(){happened = false;})
+// }
 
 /**
  * This function handles the events related to the players getting connected
@@ -68,48 +123,60 @@ function addPlayerToRoom(room, user)
  * 3: In the main menu let the players spectate the games.
  * 4: Update win loss record of the players. 
  */
-function handleSocket(userManager)
+function handleSocket(userManager, user)
 {
-    socketIO.on("connection", function(socket)
+    let myfunc = function(socket)
     {
-        let currentPlayerID = gameRoom.length - 1;
-        socket.emit("initG", gameRoom[currentPlayerID][1]);
-        socket.on("makeMove", function(gameComponents)
+        let happened = false;
+        let gameRoom;
+        initializeRoomOnSocketForUser(user, socket);
+        socket.off("provideRoomID",function(data){}).on("provideRoomID", function(data)
         {
-            if (turn)
+            gameRoom = getRoomByID(data);
+            let currentPlayerID = gameRoom.room.length - 1;
+            socket.emit("initG", {turn: gameRoom.room[currentPlayerID][1], roomID: gameRoom.id});
+            if (!happened)
+            socket.off("makeMove",function(socket){}).on("makeMove", function(gameComponents)
             {
-                turn = false;
-            } else turn = true;
-            socket.broadcast.emit("gameAction", {turn: turn, board: gameComponents.board});
-            if (gameOver(gameComponents.board))
-            {
-                addWinnerScore(userManager, gameRoom[currentPlayerID][1]);
-                socket.broadcast.emit("gg", gameRoom[currentPlayerID][1]);
-                gameRoom = [];
-                turn = true;
-            }
-        });
-        socket.on("disconnect", function()
-        {
-            let happened = false;
-            if ((!gameOver() && hasBothPlayers() && gameRoom[currentPlayerID][1] != "spectate"))
-            {
-                declareWinnerOnQuit(userManager, currentPlayerID);
                 happened = true;
-            }
-            if (happened)
+                if (gameComponents.roomID == gameRoom.id)
+                {
+                    gameRoom.turn = !gameComponents.turn;
+                    socket.broadcast.emit("gameAction", {turn: gameRoom.turn, board: gameComponents.board, roomID: gameRoom.id});
+                    if (gameOver(gameComponents.board) &&gameRoom.room.length != 0)
+                    {
+                        addWinnerScore(userManager, gameRoom.room[currentPlayerID][1], gameRoom.room);
+                        socket.broadcast.emit("gg", gameRoom.room[currentPlayerID][1], gameRoom.id);
+                        //Todo: You should actually remove the room itself;
+                        gameRoom.room = [];
+                        gameRoom.turn = true;
+                    }
+                }
+            });
+            socket.on("disconnect", function()
             {
-                socket.broadcast.emit("gg", !gameRoom[currentPlayerID][1]);
-                gameRoom = [];
-            }
-            if (gameRoom.length == 1)
-            {
-                gameRoom = [];
-            } else gameRoom.splice(currentPlayerID, 1);
-            console.log("Disconnected" + gameRoom.length);
-
+                let happened = false;
+                if ((!gameOver() && hasBothPlayers() && gameRoom.room[currentPlayerID][1] != "spectate"))
+                {
+                    declareWinnerOnQuit(userManager, currentPlayerID, gameRoom.room);
+                    happened = true;
+                }
+                if (happened)
+                {
+                    socket.broadcast.emit("gg", !gameRoom.room[currentPlayerID][1]);
+                    gameRoom.room = [];
+                }
+                if (gameRoom.room.length == 1)
+                {
+                    gameRoom.room = [];
+                } else gameRoom.room.splice(currentPlayerID, 1);
+                console.log("Disconnected" + gameRoom.room.length);
+    
+            });
         });
-    });
+        socket.on("turnItOff", function(){happened = false;})
+    }
+    socketIO.off("conncetion", myfunc).on("connection", myfunc);
 }
 
 /**
@@ -133,24 +200,36 @@ function hasBothPlayers()
     }
     return te && fe;
 }
-function addWinnerScore(userManager, winner)
+
+function addWinnerScore(userManager, winner, gameRoom)
 {
+    let user1;
+    let user2;
     for (let i = 0; i < gameRoom.length; ++i)
     {
         if (gameRoom[i][1] == winner)
         {
+            user1 = gameRoom[i][0];
+            user1.room = [];
             userManager.addWin(gameRoom[i][0]);
+            gameRoom[i][0].room = [];
+            
         } else if (gameRoom[i][1] != "spectate" && gameRoom[i][1] != winner)
         {
+            user2 = gameRoom[i][0];
+            user2.room = [];
             userManager.addLoss(gameRoom[i][0]);
+            gameRoom[i][0].room = [];
         }
     }
+    userManager.addToUsersRecord(user1, user2);
 }
-function declareWinnerOnQuit(userManager, userID)
+function declareWinnerOnQuit(userManager, userID, gameRoom)
 {
     if ((gameRoom[userID][1] == true || gameRoom[userID][1] == false))
     {
         console.log(gameRoom[userID][0]);
+        gameRoom[userID][0].room = [];
         userManager.addLoss(gameRoom[userID][0]);
         for (let i = 0; i < gameRoom.length; ++i)
         {
@@ -214,13 +293,10 @@ function checkWinDiagonally(circles) {
     for (let r = 0; r < 6; r++) {
         for (let c = 0; c < 7; c++) {
             if (circles[r][c].color == 'white') continue;
-            let checked = false;
-            let forwardCounter = 1;
             let ffc = 1;
             let fbc = 1;
             let bbc = 1;
             let bfc = 1;
-            let backwardCounter = 1;
             for (let counter = 1; counter < 4; counter++) {
                 if (r + 3 < 6) {
                     if (c + 3 < 7) {
@@ -250,6 +326,132 @@ function checkWinDiagonally(circles) {
         }
     }
     return false;
+}
+
+/**
+ * This method is responsible for setting the server's get call for finding the roooms.
+ * @param {the server} server 
+ */
+function setFindRooms(server)
+{
+    server.get("/findrooms", function(request, response)
+    {
+        removeEmptyRoom();
+        response.render("public/search/searchGames.ejs", {current: rooms});
+    });
+}
+
+/**
+ * This method takes care of the get call related to the making room portion of the code.
+ * @param {the main server} server 
+ * @param {the user manager object} userManager 
+ */
+function setRoomCreation(server, userManager)
+{
+    server.get("/makeroom", function(request, response)
+    {
+        if (request.session.user == null)
+        {
+            response.redirect("/user");
+        }
+        else
+        {
+            if (request.url.includes("?"))
+            {
+                console.log(request.query.username);
+                console.log(request.query.password);
+                createRoom(request.session.user, request.query.username, request.query.password, server);
+                handleSocket(userManager, request.session.user);
+                response.redirect("/game");
+            }
+            else response.render("public/game/makeGame.ejs");
+        }
+    });
+}
+
+/**
+ * 
+ * @param {the user who creates the room} user 
+ * @param {the name of the room} name 
+ * @param {the password of the room} password 
+ */
+function createRoom(user, name, password, server, userManager)
+{
+    let id = rooms.length == 0 ? 1000: rooms[rooms.length-1].id + 1;
+    rooms.push({id: id, room:[[user, true, id]], name: name, password: password, turn: true});
+    user.room.push(rooms[rooms.length-1].id);
+    server.get("/rooms/"+id, function(request, response)
+    {
+        if (request.url.includes("?"))
+        {
+            if (request.query.password == password)
+            {
+                addUserToRoom(rooms[rooms.length-1], request.session.user);
+                response.redirect("/game");
+                handleSocket(userManager, user);
+                return;
+            }
+        }
+        response.render("public/game/joinRoom.ejs");
+        //Open up an authentiaction page; if they were able to authenticate, then move them to the array and redirect to the game page.
+    });
+}
+function initializeRoomOnSocketForUser(user, socket)
+{
+    socket.emit("sendRoom", user.room[0]);
+}
+/**
+ * This method is responsible for adding a user to the room
+ * @param {the room} room 
+ * @param {the user to be added to the room} user 
+ */
+function addUserToRoom(room, user)
+{
+    room.room.push([user, room.room.length == 1 ? false: "spectate", room.id]);
+    user.room.push(room.id);
+    // user.currentRoom = room;
+}
+
+/**
+ * This method is responsible for providing the room with the given id.
+ * @param {the id of the room} id 
+ * @returns the room that matches the given id.
+ */
+function getRoomByID(id)
+{
+    for (let i = 0; i < rooms.length; ++i)
+    {
+        if (rooms[i].id == id) return rooms[i];
+    }
+    return null;
+}
+/**
+ * This method takes care of joining a player to the room.
+ * It would automatically join the rest of the players as spectators
+ * once there are two people in the room.
+ * @param {the user who is trying to join the game} user 
+ * @param {the password of the room} password 
+ * @param {the id of the room they are trying to join} roomID 
+ */
+function joinRoom(user, password, roomID)
+{
+    let room = getRoomByID(roomID);
+    if (room.password == password)
+    {
+        room.room.push(user);
+        // user.room = room;
+    }
+}
+
+function removeEmptyRoom()
+{
+    for (let i = 0; i <rooms.length; ++i)
+    {
+        if (rooms[i].room.length == 0)
+        {
+            rooms.splice(i,1);
+        }
+    }
 }
 
 module.exports = {init};

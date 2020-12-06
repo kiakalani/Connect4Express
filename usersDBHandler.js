@@ -34,7 +34,7 @@ function addUser(username, password, fullName, request, server)
     let users = readUsers();
     let addableUser = {id: users.length == 0 ? 1000: users[users.length-1].id + 1, username: username, password: password,
     fullName: fullName, accountType: "public", status: "online", totalGamesPlayed: 0, wins: 0, losses: 0, sentFriendRequests: []
-    , receivedFriendRequests: [], friends: [], room: null};
+    , receivedFriendRequests: [], friends: [], room: [], record: []};
     setUserGet(addableUser, server);
     request.session.user = addableUser;
     users.push(addableUser);
@@ -516,9 +516,16 @@ function getPublicUsers()
     return publicUsers;
 }
 
+function addToUsersRecord(user1, user2)
+{
+    user1.record.push([user2.username, "Won"]);
+    user2.record.push([user1.username, "lost"]);
+    updateUser(user1);
+    updateUser(user2);
+}
 
 module.exports = {setUserOffline, showFollowRequests, addWin,
 addLoss, usersFriends, setOnlineStatus, setUserType, 
 setAllUsersGet, addUser, loginUser, userByUserName, userByID,
 readUsers, searchForUser, searchFollowingUser,
-searchThroughFollowRequests};
+searchThroughFollowRequests, addToUsersRecord};

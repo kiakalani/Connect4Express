@@ -21,6 +21,10 @@ function setMainMenu(server)
 {
     server.get("/", function(request, response)
     {
+        if (request.session.user != null)
+        {
+            request.session.user.room = [];
+        }
         response.render("public/index.ejs");
         // console.log(server.session.user);
     });
